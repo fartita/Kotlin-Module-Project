@@ -4,7 +4,7 @@ class App {
         println("Приложение 'Заметки' запущено, выберите команду:")
         val screen = Screen()
         while (true) {
-            when (CurrentState.state) {
+            when (screen.getCurrentState()) {
                 Command.APP_START -> screen.showMenu()
                 Command.ARCHIVE_CHOOSE -> screen.chooseArchive()
                 Command.ARCHIVE_OPEN -> screen.openArchive()

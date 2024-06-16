@@ -10,15 +10,20 @@ class Screen {
     private var archivesMap: MutableMap<Int, Archive> = mutableMapOf()
     private var archiveVariable: Int = 0
     private var noteVariable: Int = 0
+    private var state = Command.APP_START
+
+    fun getCurrentState(): Command{
+        return state
+    }
 
     fun showMenu() {
         println("0. Создать архив")
         println("1. Выбрать архив")
         println("2. Выход")
         when(checkInput(2)){
-            0 -> CurrentState.state = Command.ARCHIVE_CREATE
-            1 -> CurrentState.state = Command.ARCHIVE_CHOOSE
-            2 -> CurrentState.state = Command.EXIT
+            0 -> state = Command.ARCHIVE_CREATE
+            1 -> state = Command.ARCHIVE_CHOOSE
+            2 -> state = Command.EXIT
         }
     }
 
@@ -28,7 +33,7 @@ class Screen {
         CounterArchives += 1
         archivesMap[CounterArchives] = Archive(name, mutableMapOf())
         println("Создан архив: $CounterArchives. ${archivesMap[CounterArchives]?.name}")
-        CurrentState.state = Command.APP_START
+        state = Command.APP_START
     }
 
     fun chooseArchive() {
@@ -40,10 +45,10 @@ class Screen {
             )
         }
         when (val archiveIds = checkInput(archivesMap.size)) {
-            0 -> CurrentState.state = Command.APP_START
+            0 -> state = Command.APP_START
             in 1..archivesMap.size -> {
                 archiveVariable = archiveIds
-                CurrentState.state = Command.ARCHIVE_OPEN
+                state = Command.ARCHIVE_OPEN
             }
         }
     }
@@ -54,12 +59,12 @@ class Screen {
         notes.forEach { (id, note) -> println("$id. Выбрать заметку ${note.name}") }
         println("${notes.size + 1}. Назад в меню")
         when (val noteIds = checkInput(notes.size + 1)) {
-            0 -> CurrentState.state = Command.NOTE_CREATE
+            0 -> state = Command.NOTE_CREATE
             in 1..notes.size -> {
                 noteVariable = noteIds
-                CurrentState.state = Command.NOTE_OPEN
+                state = Command.NOTE_OPEN
             }
-            else -> CurrentState.state = Command.ARCHIVE_CHOOSE
+            else -> state = Command.ARCHIVE_CHOOSE
         }
     }
 
@@ -68,7 +73,7 @@ class Screen {
                 "${archivesMap[archiveVariable]?.notesMap?.get(noteVariable)?.text}")
         println("Введите цифру 1 для выхода")
         when (scanner.nextLine()) {
-            "1" -> CurrentState.state = Command.ARCHIVE_OPEN
+            "1" -> state = Command.ARCHIVE_OPEN
             else -> println("Такой команды нет")
         }
     }
@@ -81,7 +86,7 @@ class Screen {
         CounterNotes += 1
         val id = CounterNotes
         archivesMap[archiveVariable]?.notesMap?.put(id, Note(name, text, archiveVariable))
-        CurrentState.state = Command.ARCHIVE_OPEN
+        state = Command.ARCHIVE_OPEN
     }
 
     private fun checkInput(sizeListOfCommands: Int) : Int {
@@ -111,6 +116,14 @@ class Screen {
     }
 
     private fun readInput() : String {
-        return scanner.nextLine().replaceFirstChar { it.titlecase(Locale.getDefault()) }
+        var text = scanner.nextLine().replaceFirstChar { it.titlecase(Locale.getDefault()) }
+        while (!text.contains("[A-Za-z0-9!\"#$%&'()*+,-./:;\\\\<=>?@\\[\\]^_`{|}~]".toRegex())) {
+            if(Regex("[\\u0400-\\u04FF]").containsMatchIn(text)){
+                break
+            }
+            println("Введите текст!")
+            text = scanner.nextLine().replaceFirstChar { it.titlecase(Locale.getDefault()) }
+        }
+        return text
     }
 }
